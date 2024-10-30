@@ -81,13 +81,13 @@ class Analyze(Utility):
         self.create_empty_dir(self.analyze_dir)
         data = self.analyze(self.test_dir)
         self.fin_analyzer()
-        self.pack(self.analyze_dir, data)
         if self.mutation_cycles > 0:
             if len(self.prev_cycle_results.items()) == 0:
                 cycle_index = "0"
             else:
                 cycle_index = str(max(int(key.split("_")[1]) for key in self.prev_cycle_results.keys()) + 1)
             self.mutation_cycles -= 1
+            self.pack(self.analyze_dir, data, cycle_index)
 
             if self.tests_to_mutate == TestsToMutate.WORST_BP_RESULT:
                 self.get_test_with_most_bp_incorrect(data, cycle_index)
@@ -103,6 +103,8 @@ class Analyze(Utility):
             new cycle, and collect the results """
             if self.mutation_cycles > 0:
                 self.run()
+        else:
+            self.pack(self.analyze_dir, data)
 
     def get_test_with_most_bp_incorrect(self, data: Dict[str, Dict[str, int]], cycle_index: str):
         """Get the test with the highest BP incorrect percentage and add it to the results by cycle index"""
@@ -160,11 +162,12 @@ class Analyze(Utility):
         if self.analyzer is not None:
             self.analyzer.fin()
 
-    def pack(self, analyze_dir: Path, analyzed_data: Dict[str, DictSI]) -> None:
+    def pack(self, analyze_dir: Path, analyzed_data: Dict[str, DictSI], cycle_index: str = None) -> None:
         """Save the results of the analysis to the specified directory
 
         :param analyze_dir: The directory where the analysis results will be saved
         :param analyzed_data: The data resulting from the analysis
+        :param cycle_index: The index of the current cycle of analysis
         """
         print(f"[+]: Save analysis' results to {analyze_dir.absolute().as_posix()}")
-        self.packer.pack(analyze_dir, analyzed_data)
+        self.packer.pack(analyze_dir, analyzed_data, cycle_index)

@@ -10,8 +10,12 @@ class IPacker(Protocol):
 
 
 class Packer:
-    def pack(self, out_dir: Path, analyzed_data: Dict[str, DictSI]) -> None:
+    def pack(self, out_dir: Path, analyzed_data: Dict[str, DictSI], cycle_index: str = None) -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         for key in analyzed_data:
-            with open(out_dir.joinpath(key + ".data"), "wt") as writter:
-                writter.write(json.dumps(analyzed_data[key]))
+            if cycle_index:
+                with open(out_dir.joinpath("cycle_" + cycle_index + "_" + key + ".data"), "wt") as writter:
+                    writter.write(json.dumps(analyzed_data[key]))
+            else:
+                with open(out_dir.joinpath(key + ".data"), "wt") as writter:
+                    writter.write(json.dumps(analyzed_data[key]))
