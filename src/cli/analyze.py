@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, Any
+import numpy as np
 
 from src.analyzers.gemAnalyzer import GemAnalyzer
 from src.analyzers.perfAnalyzer import PerfAnalyzer
@@ -67,6 +68,10 @@ class Analyze(Utility):
         """Print log info, then check that input tests directory's path is passed,
         and output directory's path also passed, create directories for analysis, start the analysis,
         and pack the results
+        If mutation_cycles > 0, we need to further mutate the tests, and reanalyze them. Firstly we detect cycle index.
+        To decide which tests to mutate, we check tests_to_mutate parameter. If it is set to "WORST_BP_RESULT", we will
+        choose tests with the worst BP result (highest BP incorrect percentage). Otherwise, we will choose all tests.
+        And chosen tests will be mutated and reanalyzed.
         """
         self.logger.info("Analyze running. Settings:")
         self.logger.info(pformat(self.settings))
@@ -77,6 +82,57 @@ class Analyze(Utility):
         data = self.analyze(self.test_dir)
         self.fin_analyzer()
         self.pack(self.analyze_dir, data)
+        if self.mutation_cycles > 0:
+            if len(self.prev_cycle_results.items()) == 0:
+                cycle_index = "0"
+            else:
+                cycle_index = str(max(int(key.split("_")[1]) for key in self.prev_cycle_results.keys()) + 1)
+            self.mutation_cycles -= 1
+
+            if self.tests_to_mutate == TestsToMutate.WORST_BP_RESULT:
+                self.get_test_with_most_bp_incorrect(data, cycle_index)
+            else:
+                self.get_all_tests(data, cycle_index)
+
+            self.logger.debug(f"Cycle {cycle_index} results:")
+            for key, value in self.prev_cycle_results.items():
+                self.logger.debug(f"{key}: {value}")
+
+            # TODO: Implement proper mutation of tests
+            """while mutation is not implemented, we will "imagine" that tests are mutated, and analyze them again in
+            new cycle, and collect the results """
+            if self.mutation_cycles > 0:
+                self.run()
+
+    def get_test_with_most_bp_incorrect(self, data: Dict[str, Dict[str, int]], cycle_index: str):
+        """Get the test with the highest BP incorrect percentage and add it to the results by cycle index"""
+
+        def calculate_bp_incorrect_percentage(src_data: Dict[str, int]) -> float:
+            bp_lookups = src_data.get(
+                "branchPred.lookups",
+                src_data.get("branchPred.btb.lookups::total", np.nan),
+            )
+            bp_incorrect = src_data.get("branchPred.condIncorrect", np.nan)
+            return round((bp_incorrect / float(bp_lookups) * 100 if bp_lookups != 0 else 0), 2)
+
+        best_test_name, best_test_bp_incorrect_percentage = max(
+            ((src_file, calculate_bp_incorrect_percentage(src_data)) for src_file, src_data in data.items()),
+            key=lambda x: x[1],
+            default=("", 0),
+        )
+        self.prev_cycle_results["cycle_" + cycle_index + "_" + best_test_name] = best_test_bp_incorrect_percentage
+
+    def get_all_tests(self, data: Dict[str, Dict[str, int]], cycle_index: str):
+        """Get all tests' BP incorrect percentage and add them to the results by cycle index"""
+
+        for src_file, src_data in data.items():
+            bp_lookups = src_data.get(
+                "branchPred.lookups",
+                src_data.get("branchPred.btb.lookups::total", np.nan),
+            )
+            bp_incorrect = src_data.get("branchPred.condIncorrect", np.nan)
+            bp_incorrect_percentage = round((bp_incorrect / float(bp_lookups) * 100 if bp_lookups != 0 else 0), 2)
+            self.prev_cycle_results["cycle_" + cycle_index + "_" + src_file] = bp_incorrect_percentage
 
     def create_empty_dir(self, dir_path: Path) -> None:
         """Ensure the specified directory is empty by removing it if it exists and then creating a new empty directory
