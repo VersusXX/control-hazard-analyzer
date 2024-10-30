@@ -35,6 +35,8 @@ def test_configurate(tmp_path):
     settings["target_isa"] = "X86"
     settings["sim_script"] = "./"
     settings["log_level"] = logging.INFO
+    settings["mutation_cycles"] = 0
+    settings["tests_to_mutate"] = "WORST_BP_RESULT"
     analyzer_instance.configurate(settings)
 
     assert analyzer_instance.settings == settings
@@ -59,6 +61,8 @@ def test_configurate_with_gem5_analyzer(tmp_path):
     settings["gem5_bin"] = "./"
     settings["target_isa"] = "X86"
     settings["sim_script"] = "./"
+    settings["mutation_cycles"] = 0
+    settings["tests_to_mutate"] = "WORST_BP_RESULT"
     settings["log_level"] = logging.INFO
     analyzer_instance.configurate(settings)
     assert isinstance(analyzer_instance.analyzer, GemAnalyzer)
@@ -79,6 +83,8 @@ def test_configurate_with_perf_analyzer(tmp_path):
     settings["gem5_bin"] = "./"
     settings["target_isa"] = "X86"
     settings["sim_script"] = "./"
+    settings["mutation_cycles"] = 0
+    settings["tests_to_mutate"] = "WORST_BP_RESULT"
     settings["log_level"] = logging.INFO
     analyzer_instance.configurate(settings)
     assert isinstance(analyzer_instance.analyzer, PerfAnalyzer)
@@ -102,6 +108,8 @@ def test_configurate_with_unknown_analyzer(tmp_path):
     settings["gem5_bin"] = "./"
     settings["target_isa"] = "X86"
     settings["sim_script"] = "./"
+    settings["mutation_cycles"] = 0
+    settings["tests_to_mutate"] = "WORST_BP_RESULT"
     settings["log_level"] = logging.INFO
     with pytest.raises(Exception) as exc_info:
         analyzer_instance.configurate(settings)
