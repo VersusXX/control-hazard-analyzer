@@ -10,7 +10,7 @@ from typing import Final, List, Dict, Any
 
 from src.cli.analyze import Analyze
 from src.protocols.utility import Utility
-from src.helpers.configurator import LogLevel
+from src.helpers.configurator import LogLevel, TestsToMutate
 
 
 DEFAULT_GENERATE_SETTINGS: Final[dict] = {
@@ -34,6 +34,8 @@ DEFAULT_ANALYZE_SETTINGS: Final[dict] = {
     "gem5_bin": "./",
     "target_isa": "",
     "sim_script": "./",
+    "mutation_cycles": 0,
+    "tests_to_mutate": TestsToMutate.WORST_BP_RESULT,
     "log_level": LogLevel.WARNING,
 }
 

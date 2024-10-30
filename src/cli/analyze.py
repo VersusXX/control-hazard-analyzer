@@ -10,6 +10,7 @@ from src.analyzers.perfAnalyzer import PerfAnalyzer
 from src.analyzers.sshAnalyzer import SshAnalyzer
 from src.helpers.backGroundBuilder import BGBuilder
 from src.helpers.builder import Builder
+from src.helpers.configurator import TestsToMutate
 from src.helpers.packer import Packer
 from src.protocols.analyzer import Analyzer
 from src.protocols.collector import DictSI
@@ -28,6 +29,9 @@ class Analyze(Utility):
         self.test_dir: Path | None = None
         self.analyze_dir: Path | None = None
         self.settings: Dict[str, Any] | None = None
+        self.mutation_cycles: int | None = None
+        self.tests_to_mutate: TestsToMutate | None = None
+        self.prev_cycle_results: Dict[str, float] | None = None
         self.logger = logging.getLogger(__name__)
 
     def configurate(self, settings: Dict[str, Any]) -> None:
@@ -43,6 +47,12 @@ class Analyze(Utility):
         self.analyze_dir = Path(settings["out_dir"])
         self.settings["compiler_args"] = shlex.split(settings["compiler_args"])
         self.builder = Builder(self.settings)
+        self.mutation_cycles = settings["mutation_cycles"]
+        self.tests_to_mutate = settings["tests_to_mutate"]
+        if settings.get("prev_cycle_results"):
+            self.prev_cycle_results = settings["prev_cycle_results"]
+        elif self.mutation_cycles > 0:
+            self.prev_cycle_results = {}
         match settings["profiler"]:
             case "perf":
                 self.analyzer = PerfAnalyzer(self.builder, settings)

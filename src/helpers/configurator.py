@@ -16,6 +16,11 @@ class ProfilerType(str, Enum):
     GEM5 = "gem5"
 
 
+class TestsToMutate(str, Enum):
+    WORST_BP_RESULT = "WORST_BP_RESULT"
+    ALL = "ALL"
+
+
 class Configurator:
     """Class for handling configuration files and argument parsing"""
 

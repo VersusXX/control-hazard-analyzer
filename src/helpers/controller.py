@@ -13,7 +13,7 @@ from src.cli.aggregate import (
 from src.cli.analyze import Analyze
 from src.cli.generate import Generate
 from src.cli.summarize import Summarize
-from src.helpers.configurator import Configurator, LogLevel, ProfilerType
+from src.helpers.configurator import Configurator, LogLevel, ProfilerType, TestsToMutate
 from src.protocols.utility import Utility
 
 app = typer.Typer(help="This script generate and test code on some platforms", chain=True)
@@ -80,6 +80,15 @@ def init_analyzer(
     sim_script: Annotated[
         str, typer.Option(help="Path to simulation Script", metavar="SIM_SCRIPT", show_default=False)
     ] = DEFAULT_ANALYZE_SETTINGS["sim_script"],
+    mutation_cycles: Annotated[
+        int,
+        typer.Option(
+            help="Number of times tests will be analyzed and mutated", metavar="MUTATION_CYCLES", show_default=False
+        ),
+    ] = DEFAULT_ANALYZE_SETTINGS["mutation_cycles"],
+    tests_to_mutate: Annotated[
+        TestsToMutate, typer.Option(help="Tests that will be mutated to reanalyze")
+    ] = DEFAULT_ANALYZE_SETTINGS["tests_to_mutate"],
     log_level: Annotated[LogLevel, typer.Option(help="Log level of program")] = DEFAULT_ANALYZE_SETTINGS["log_level"],
 ):
     command_args["utility"] = DEFAULT_ANALYZE_SETTINGS["utility"]
@@ -94,6 +103,8 @@ def init_analyzer(
     command_args["gem5_bin"] = gem5_bin
     command_args["target_isa"] = target_isa
     command_args["sim_script"] = sim_script
+    command_args["mutation_cycles"] = mutation_cycles
+    command_args["tests_to_mutate"] = tests_to_mutate.value
     command_args["log_level"] = log_level.value
     configurator.configurate(command_args, DEFAULT_ANALYZE_SETTINGS)
     run_utility()
